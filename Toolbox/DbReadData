@@ -1,0 +1,217 @@
+package com.automation.toolbox.database.connectionManger;
+
+import java.sql.CallableStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+
+public class DbReadData {
+
+	private DbConnection connection = null;
+
+	public DbReadData(String connectionString) {
+		try {
+			
+			DataBaseType databasetype = getDatabaseTypeFromConnString(connectionString);
+			
+			DbConnectionFactory connctionFact = new DbConnectionFactory(connectionString);
+			connection = connctionFact.buildConnection(databasetype);
+			
+			
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+	
+	private static DataBaseType getDatabaseTypeFromConnString(String connectionString){
+		if(connectionString.contains("oracle")){
+			return DataBaseType.ORACLE; 
+		}
+		else if(connectionString.contains("sqlserver")){
+			return DataBaseType.SQLSERVER; 
+		}
+		else {
+			return DataBaseType.UNDEFINED; 
+		}
+	}
+	
+	public DbReadData(DbConnection connection) {
+		this.connection = connection;
+	}
+
+	 @Override
+	 protected void finalize() throws Throwable {
+		 connection.Close();
+	 }
+	
+	public DbConnection getConnection() {
+		return this.connection;
+	}
+
+	public String getSingleCell(String SQL) {
+		return getSingleCell( SQL, 0);
+	}
+	
+	public String getSingleCell(String SQL, int timeoutMin) {
+		ResultSet rs = null;
+		String res = "";
+		try {
+			int maxcount = 0;
+			if(timeoutMin>0){
+				maxcount = timeoutMin * 30;
+			}
+			while (res.equals("") && maxcount-->=0) {
+				rs = getResultSet(SQL);
+				while (rs.next()) {
+					res = rs.getString(1);
+					break;
+				}
+				if (res.equals("")) {
+					Thread.sleep(2000);
+				} else {
+					break;
+				}
+			}
+		} catch (Exception ex) {
+			System.out.println("Exception in DbReadData.getSingleCell : " + ex.getMessage());
+		}
+		return res;
+	}
+
+	public static String getSingleCell(String connectionString , String SQL, int timeoutMin) {
+		DbReadData dbRead = new DbReadData(connectionString);
+		String res = dbRead.getSingleCell(SQL, timeoutMin);
+		dbRead.connection.Close(); 
+		return res; 
+	}
+	
+	
+	public static LinkedHashMap<String, String> getSingleRow(String connectionString, List<String> SQL) {
+		DbReadData dbRead = new DbReadData(connectionString);
+		LinkedHashMap<String, String> res = dbRead.getSingleRow(SQL);
+		dbRead.connection.Close(); 
+		return res; 
+	}
+	
+	public static LinkedHashMap<String, String> getSingleRow(String connectionString, String  SQL) {
+		DbReadData dbRead = new DbReadData(connectionString);
+		LinkedHashMap<String, String> res = dbRead.getSingleRow(SQL);
+		dbRead.connection.Close(); 
+		return res; 
+	}
+	
+	public LinkedHashMap<String, String> getSingleRow(List<String> SQL) {
+		LinkedHashMap<String, String> outputColumnValueMap = new LinkedHashMap<String, String>();
+		for (String sql : SQL) {
+			LinkedHashMap<String, String> ColumnValueMap = getSingleRow(sql);
+			String keyName = ColumnValueMap.keySet().toArray()[0].toString();
+			outputColumnValueMap.put(keyName, ColumnValueMap.get(keyName));
+		}
+		return outputColumnValueMap;
+	}
+	
+	public LinkedHashMap<String, String> getSingleRow(String SQL) {
+		ResultSet rs = null;
+		rs = getResultSet(SQL);
+		
+		try {
+			ResultSetMetaData rsmd = rs.getMetaData();
+			int columnCount = rsmd.getColumnCount();
+
+			while (rs.next()) {
+				LinkedHashMap<String, String> outputColumnValueMap = new LinkedHashMap<String, String>();
+				for (int j = 1; j <= columnCount; j++) {
+					String colName = rsmd.getColumnName(j);
+					String value = rs.getString(j);
+					outputColumnValueMap.put(colName, value);
+				}
+				return outputColumnValueMap;
+			}	
+		}
+		catch (Exception ex) {
+			System.out.println("Exception in DbReadData.getSingleCell : " + ex.getMessage());
+			return null;
+		}
+		return null;
+	}
+
+
+	public ResultSet getResultSet(String SQL) {
+		return connection.executeSQL(SQL);
+	}
+	
+	public static ResultSet getResultSet(String connectionString, String SQL) {
+		DbReadData dbRead = new DbReadData(connectionString);
+		ResultSet res = dbRead.getResultSet(SQL);
+		dbRead.connection.Close(); 
+		return res; 
+	}
+
+	
+	public int executeUpdate(String SQL){
+		return this.connection.executeUpdate(SQL);
+	}
+	
+	public static int executeUpdate(String connectionString, String SQL){
+		DbReadData dbRead = new DbReadData(connectionString);
+		int res = dbRead.executeUpdate(SQL);
+		dbRead.connection.Close(); 
+		return res; 	
+	}
+	
+	public static void ExecuteUpdateProc(String connectionString, String ProcName, ArrayList<String> Params){
+		CallableStatement callableStatement =  getCallableStatementProc(connectionString,ProcName,Params);
+		try {
+			callableStatement.executeUpdate();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public static ResultSet ExecuteSelectProc(String connectionString, String ProcName, ArrayList<String> Params){
+		CallableStatement callableStatement =  getCallableStatementProc(connectionString,ProcName,Params);
+		try {
+			return callableStatement.executeQuery();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	private static CallableStatement getCallableStatementProc(String connectionString, String ProcName, ArrayList<String> Params){
+		CallableStatement callableStatement = null;
+		DbConnectionFactory connctionFact = new DbConnectionFactory(connectionString);
+		
+		DataBaseType databasetype = getDatabaseTypeFromConnString(connectionString); 
+		DbConnection connection = connctionFact.buildConnection(databasetype);
+	
+		int count = Params.size();
+		String questions = "";  
+				
+		for(int i=0;i<count;i++){
+			questions += "?,"; 			
+		}
+		questions += questions.substring(0,questions.length()-1);  
+		  
+		String Proc = "{call "+ ProcName +"("+ questions +")}";
+		try {
+			callableStatement = connection.getInstance().prepareCall(Proc);
+			for(int i=1;i<=count;i++){
+				callableStatement.setString(i,(String) Params.get(i));  			
+			}			
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return callableStatement;
+	}	
+	
+
+}
