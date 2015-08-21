@@ -1,0 +1,48 @@
+<Window x:Class="NewSpy.SpyWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MySpy" Height="350" Width="525" Loaded="Window_Loaded_1" KeyDown="Window_KeyDown">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="258*"/>
+            <ColumnDefinition Width="259*"/>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Row="0" Grid.Column="0">
+            <ToolBar HorizontalAlignment="Left" Width="258">
+                <Button >
+                         <Image x:Name="trackball" Source ="images/trackball.png" MouseDown="trackball_MouseDown"  />
+                </Button>
+                <Button  VerticalAlignment="Top" x:Name="btnRefresh" Click="btnRefresh_Click" >
+                    <Image Source ="images/refresh.png" Width="16" Height="16" />
+                </Button>
+
+            </ToolBar>
+        </Grid>
+        <Grid Grid.Row="0" Grid.Column="1">
+            <TextBox TextWrapping="Wrap" x:Name="txtTreePath" IsReadOnly="True"/>
+        </Grid>
+        <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="152*"/>
+                <ColumnDefinition Width="106*"/>
+                <ColumnDefinition Width="2"/>
+                <ColumnDefinition Width="257*"/>
+            </Grid.ColumnDefinitions>
+            <TreeView x:Name="treeVisual" Grid.Column="0" Width="Auto" Grid.ColumnSpan="2" />
+            <GridSplitter Grid.Column="2" HorizontalAlignment="Stretch" ResizeDirection="Columns" Height="Auto" Width="3" Grid.ColumnSpan="2" Margin="0,0,256,0" />
+            <Grid Grid.Column="3">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="20"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBox Background="White" Foreground="Black" x:Name="txtSearch" Grid.Row="0" TextChanged="txtSearch_TextChanged_1"></TextBox>
+                <DataGrid Grid.Row="1" MouseDoubleClick="grdPropVal_MouseDoubleClick"  Width="Auto" x:Name="grdPropVal" />
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>
