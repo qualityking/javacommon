@@ -1,0 +1,69 @@
+<html>
+<head>
+<script type="text/javascript" src="jquery-1.11.3.min.js"></script>
+<script type="text/javascript" src="jquery.rotate.js"></script>
+
+<style>
+.chrome, .ff, .safari, .ie{
+	background:gray;
+	height:120px;
+	width:120px;
+	top:10px;
+    position:absolute;
+	display:none;
+}
+
+</style>
+</head>
+
+
+
+<body>
+
+<script type="text/javascript">
+$(document).ready(function() {
+    $(".chrome").rotate({
+        speed: 1000,
+        degrees: 720,
+        start: 0,
+        moveto: 200
+    }, ie);
+});
+
+function ie() {
+    $(".ie").rotate({
+        speed: 500,
+        degrees: 360,
+        start: 200,
+        moveto: 350
+    }, ff);
+}
+function ff() {
+    $(".ff").rotate({
+        speed: 500,
+        degrees: 360,
+        start: 350,
+        moveto: 500
+    }, safari);
+}
+function safari() {
+    $(".safari").rotate({
+        speed: 500,
+        degrees: 360,
+        start: 500,
+        moveto: 650
+    });
+}
+
+
+  </script>
+
+	<img src="chrome.jpg" class="chrome" style="z-index:4"></img>
+	<img src="ie.jpg" class="ie" style="z-index:3"></img>
+	<img src="ff.jpg" class="ff" style="z-index:2"></img>
+	<img src="safari.jpg" class="safari" style="z-index:1"></img>
+
+	
+	
+
+</body>
